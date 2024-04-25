@@ -1,0 +1,7 @@
+{
+  "devDependencies": {
+    "serverless-plugin-git-variables": "^5.2.0",
+    "serverless-plugin-log-retention": "^2.0.0",
+    "serverless-prune-plugin": "^2.0.2"
+  }
+}

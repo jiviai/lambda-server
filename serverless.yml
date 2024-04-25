@@ -1,0 +1,66 @@
+service: event-server
+frameworkVersion: '3'
+provider:
+  name: aws
+  runtime: python3.8
+  timeout: 900
+  environment:
+    CURRENT_STAGE: ${opt:stage}
+  stackTags:
+    Pipeline: event-server
+    Stage: ${opt:stage}
+    Owner: rishabh@jivi.ai
+package:
+  exclude:
+    - node_modules/**
+    - iac/**
+    - .serverless/**
+custom:
+  gitDescription: ${git:repository} - ${git:branch} - ${git:sha1} - ${git:isDirty}
+
+functions:
+  chat_agent:
+    description: ${self:custom.gitDescription}
+    handler: chat_agent/controller.lambda_handler
+    logRetentionInDays: 3
+    timeout: 30
+    role: arn:aws:iam::458458243133:role/lambda-server-role
+    events:
+      - http:
+          path: '/slack/initiate_user_chat'
+          method: post
+    layers:
+      - arn:aws:lambda:ap-south-1:458458243133:layer:LangchainOpenAI:2
+      - arn:aws:lambda:ap-south-1:458458243133:layer:PandasRequests:2
+    vpc:
+      securityGroupIds:
+        - sg-0551b48fe5c0c245f # jivi-internal-dev-vpc
+      subnetIds:
+        - subnet-0720e5e03de8c4732 # ap-south-1a
+        - subnet-091130e9ca0c85d04 # ap-south-1b
+        - subnet-057ae2803def322b6 # ap-south-1c
+    tags:
+      Name: ${self:provider.stackTags.Pipeline}-${self:provider.stackTags.Stage}
+
+  doctor_patient_evaluation:
+    description: ${self:custom.gitDescription}
+    handler: doctor_patient_evaluation/controller.lambda_handler
+    logRetentionInDays: 3
+    role: arn:aws:iam::458458243133:role/lambda-server-role
+    layers:
+      - arn:aws:lambda:ap-south-1:458458243133:layer:LangchainOpenAI:2
+      - arn:aws:lambda:ap-south-1:458458243133:layer:PandasRequests:2
+    vpc:
+      securityGroupIds:
+        - sg-0551b48fe5c0c245f # jivi-internal-dev-vpc
+      subnetIds:
+        - subnet-0720e5e03de8c4732 # ap-south-1a
+        - subnet-091130e9ca0c85d04 # ap-south-1b
+        - subnet-057ae2803def322b6 # ap-south-1c
+    tags:
+      Name: ${self:provider.stackTags.Pipeline}-${self:provider.stackTags.Stage}
+
+plugins:
+  - serverless-prune-plugin
+  - serverless-plugin-git-variables
+  - serverless-plugin-log-retention

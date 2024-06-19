@@ -35,9 +35,16 @@ def get_chat_history(
     """
     try:
         dynamo_db = DynamoDBClient(
-            table_name=f'user_chat_history_{env}',
-            region_name='ap-south-1'
-        )
+                table_name=f'user_chat_history_{env}',
+                region_name='ap-south-1'
+            )
+        
+        if env in ['experiment']:
+            dynamo_db = DynamoDBClient(
+                table_name=f'user_history_search',
+                region_name='ap-south-1'
+            )
+
         output = []
         output = dynamo_db.query(
             indexName='user_id-session_id-index',
@@ -175,9 +182,9 @@ def get_evaluation_question_from_db(
                 result = row
     return result
 
-def save_evaluation_result(row):
+def save_evaluation_result(row,table_name):
     dynamo_db = DynamoDBClient(
-            table_name='system_evaluation_result',
+            table_name=table_name,
             region_name='ap-south-1'
         )
     dynamo_db.add_item(row)

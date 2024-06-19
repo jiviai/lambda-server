@@ -10,7 +10,7 @@ def invoke_user_token_generate(
     env: str
 ):
     out = None
-    url = f"https://api-server.jivihealth.org/jarvis/{env}/api/v1/anonymous/token/generate"
+    url = f"https://api-server.jivihealth.org/jarvis{env}/api/v1/anonymous/token/generate"
 
     payload = {}
     headers = {

@@ -13,7 +13,7 @@ def invoke_initiate_chat(
     env: str
 ):
     out = None
-    url = f"https://api-server.jivihealth.org/jarvis/{env}/api/v1/chat/init"
+    url = f"https://api-server.jivihealth.org/jarvis{env}/api/v1/chat/init"
 
     payload = {}
     headers = {
@@ -21,6 +21,7 @@ def invoke_initiate_chat(
         'token': token,
         'userType': user_type
     }
+    logger.info(f"chat init headers - {headers}")
 
     response = requests.request(
         "POST",
@@ -30,7 +31,7 @@ def invoke_initiate_chat(
         timeout=30
     )
 
-    logger.info(f"Invoked chat initiation - {response.text} and status - {response.status_code}")
+    logger.info(f"Invoked chat init - {response.text} and status - {response.status_code}")
     if response.status_code == 200:
         out = response.json()
     
@@ -44,7 +45,7 @@ def invoke_chat(
    env: str
 ):
     out = None
-    url = f"https://api-server.jivihealth.org/jarvis/{env}/api/v2/chat/guided"
+    url = f"https://api-server.jivihealth.org/jarvis{env}/api/v2/chat/guided"
 
     payload = json.dumps({
         "session_id": session_id,
@@ -61,6 +62,7 @@ def invoke_chat(
         'userType': user_type,
         'Content-Type': 'application/json'
     }
+    logger.info(f"chat conversation headers - {headers}")
 
     response = requests.request(
         "POST",

@@ -7,10 +7,11 @@ logger.info("Loaded " + __name__)
 import pandas as pd
 import uuid
 import json
+import time
 
 from doctor_patient_evaluation.llm.llm import PatientAgent, SummaryAgent, DdxAgent, MedHistoryTakerAgent
-from doctor_patient_evaluation.api.api import invoke_user_differential_diagnosis, invoke_user_session_summary
-from doctor_patient_evaluation.api.helpers import invoke_custom_user_conversation
+from doctor_patient_evaluation.api.api import invoke_user_differential_diagnosis, invoke_user_session_summary, invoke_user_conversation
+#from doctor_patient_evaluation.api.helpers import invoke_custom_user_conversation
 from doctor_patient_evaluation.db.helpers import get_chat_history
 from doctor_patient_evaluation.db.parsers import parse_conversation_history_response
 
@@ -27,7 +28,9 @@ def evaluate_new_case(
     #case_study,
     #actual_differential_diagnosis
 ):
+    session_id = str(uuid.uuid4())
     try:
+        failed = False
         session_id = str(uuid.uuid4())
         logger.info(f"new session id created: {session_id}")
         
@@ -36,12 +39,18 @@ def evaluate_new_case(
         code = "none"
         list_out = [{"Type":"Patient", "Conversation":symptom}]
         
-        while code!='summary':
-            question,code = invoke_custom_user_conversation(
+        while code!='confirmation':
+            question,code = invoke_user_conversation(
                 session_id=session_id,
+                env=env,
                 user_input=symptom,
-                env=env
-             )
+                code=code
+            )
+            if (question is None and code is None):
+                failed = True
+                logger.info(f"case study skipped because of user conversation not responding - {failed}")
+                break
+                
             logger.info(f"Doctor:{question}")
             conv +="\n "+f"Doctor:{question}"
             out = {}
@@ -114,13 +123,17 @@ def evaluate_new_case(
         #     out['Conversation'] = symptom
         #     list_out.append(out)
         #     logger.info(f"Patient:{symptom}")
-
-
+        logger.info("Waiting for 150 seconds to get the summary from the system...")
+        time.sleep(100)
+        
         jivi_system_summary = invoke_user_session_summary(
             session_id=session_id,
             env=env
         )
         
+        logger.info("Waiting for 150 seconds to get the ddx from the system...")
+        time.sleep(100)
+
         jivi_system_differential_diagnosis = invoke_user_differential_diagnosis(
             session_id=session_id,
             env=env,
@@ -141,8 +154,8 @@ def evaluate_new_case(
             patient_summary=jivi_system_summary
         )
         
-        return list_out, jivi_system_summary, jivi_system_differential_diagnosis, ddx_df, summary_ddx_response
+        return session_id, failed, list_out, jivi_system_summary, jivi_system_differential_diagnosis, ddx_df, summary_ddx_response
     
     except Exception as e:
         logger.error(f"Error in evaluation - {e}", exc_info=True)
-        return "","", [{}], [{}], ""
+        return session_id, [{}],[{}],"",[{}],[{}],""

@@ -52,34 +52,45 @@ def lambda_handler(
                 question_id_url = new_image.get('question_id_url').get('S')
                 diagnosis = new_image.get('diagnosis').get('S')
 
-                conv, jivi_system_summary, jivi_system_differential_diagnosis, ddx_df, summary_ddx = evaluate_new_case(
+                session_id, failed, conv, jivi_system_summary, jivi_system_differential_diagnosis, ddx_df, summary_ddx = evaluate_new_case(
                     new_case_study_text=case_study,
                     env=env,
                     diagnosis=diagnosis
                 )
-                
-                analytics_result = generate_analytics_for_case_study(
-                    jivi_system_differential_diagnosis=jivi_system_differential_diagnosis
-                )
-                #logger.info(f"Evaluation result - {evaluation_result}")
-                
-                result['question_set_id'] = question_set_id
-                result['question_id'] = question_id
-                result['question_id_url'] = question_id_url
-                result['conv'] = conv
-                result['jivi_system_summary'] = jivi_system_summary
-                result['jivi_system_differential_diagnosis'] = jivi_system_differential_diagnosis
-                result['ddx_df'] = ddx_df
-                result['summary_ddx'] = summary_ddx
-                result['created_at'] = str(datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f"))
-                result['actual_differential_diagnosis'] = diagnosis
-                result['env'] = env
-                result['case_study'] = case_study
-                result['diagnosis_rank'] = analytics_result.get('rank')
-                result['ddx_match_value'] = analytics_result.get('ddx_match_value')
 
-                save_evaluation_result(convert_float_to_decimal(result))
-                logger.info(f"evaluation result saved - {question_id} for {question_set_id}")                
+                if jivi_system_differential_diagnosis:
+                    empty_dicts = [d for d in jivi_system_differential_diagnosis if d == {}]
+                    if not empty_dicts:
+                        analytics_result = generate_analytics_for_case_study(
+                            jivi_system_differential_diagnosis=jivi_system_differential_diagnosis
+                        )
+                        #logger.info(f"Evaluation result - {evaluation_result}")
+                        result['session_id'] = session_id
+                        result['question_set_id'] = question_set_id
+                        result['question_id'] = question_id
+                        result['question_id_url'] = question_id_url
+                        result['conv'] = conv
+                        result['jivi_system_summary'] = jivi_system_summary
+                        result['jivi_system_differential_diagnosis'] = jivi_system_differential_diagnosis
+                        result['ddx_df'] = ddx_df
+                        result['summary_ddx'] = summary_ddx
+                        result['created_at'] = str(datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S.%f"))
+                        result['actual_differential_diagnosis'] = diagnosis
+                        result['env'] = env
+                        result['case_study'] = case_study
+                        result['diagnosis_rank'] = analytics_result.get('rank',None)
+                        result['ddx_match_value'] = analytics_result.get('ddx_match_value',0)
+
+                        if failed is True:
+                            save_evaluation_result(convert_float_to_decimal(result), "system_evaluation_failures")
+                            logger.info(f"evaluation result saved for a failed case - {question_id} for {question_set_id}")                
+                        else:
+                            save_evaluation_result(convert_float_to_decimal(result), "system_evaluation_result")
+                            logger.info(f"evaluation result saved - {question_id} for {question_set_id}")
+                    else:    
+                        logger.error("Evaluation has failed because ddx has ano length")
+                else:    
+                    logger.error("Evaluation has failed because ddx has not responded")                
             
 
     # return {

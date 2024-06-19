@@ -4,8 +4,6 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.info("Loaded " + __name__)
 
-import os
-os.environ['OPENAI_API_KEY']='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'
 
 from langchain.prompts import PromptTemplate
 from langchain.llms import OpenAI

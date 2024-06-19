@@ -39,6 +39,7 @@ def parse_conversation_history_response(
                 out['Response-Human'] = None
                 out['Response-QuestionAgent'] = None
                 out['Response-DifferentialDiagnosis'] = None
+                out['Response-IncrementalSummary'] = None
                 #out['Response'] = None
                 #out['moderator_response'] = None
                 ai_messages = message.get('data').get('additional_kwargs').get('agent_output')
@@ -55,7 +56,10 @@ def parse_conversation_history_response(
                         #out['Response'] = ai_message.get('data').get('content')
                     if ai_message.get('type') == 'moderator':
                         out['Response-Moderator'] = ai_message.get('data').get('content')
+                    if ai_message.get('type') == 'incremental_summary':
+                        out['Response-IncrementalSummary'] = ai_message.get('data').get('content')
                 parsed_messages.append(out)
+                
                 
         #output_df = pd.DataFrame(parsed_messages)
         #reversed_output_df = output_df.iloc[::-1]

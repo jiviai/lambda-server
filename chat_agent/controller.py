@@ -22,7 +22,7 @@ def lambda_handler(
         if api_body.get('user_type') == 'NEW':
             #Register the user and generate the user id and token
             generate_user_response = invoke_user_token_generate(
-                env='staging'
+                env=''
             )
             
             #Retrieve token and user_id and generate chat
@@ -34,7 +34,7 @@ def lambda_handler(
             generate_chat_init_response = invoke_initiate_chat(
                 token=token,
                 user_type=user_type,
-                env='staging'
+                env=''
             )
              
             session_id = generate_chat_init_response.get('data').get('sessionId')
@@ -44,7 +44,7 @@ def lambda_handler(
                 message=api_body.get('message'),
                 token=token,
                 user_type=user_type,
-                env='staging'
+                env=''
             )
             
             response_message = generate_chat_response.get('data').get('response')[0].get('header')
@@ -78,7 +78,7 @@ def lambda_handler(
                 message=api_body.get('message'),
                 token=token,
                 user_type=user_type,
-                env='staging'
+                env=''
             )
             
             response_message = generate_chat_response.get('data').get('response')[0].get('header')

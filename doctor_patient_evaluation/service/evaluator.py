@@ -39,7 +39,7 @@ def evaluate_new_case(
         code = "none"
         list_out = [{"Type":"Patient", "Conversation":symptom}]
         
-        while code!='confirmation':
+        while code!='summary':
             question,code = invoke_user_conversation(
                 session_id=session_id,
                 env=env,
@@ -123,17 +123,14 @@ def evaluate_new_case(
         #     out['Conversation'] = symptom
         #     list_out.append(out)
         #     logger.info(f"Patient:{symptom}")
-        logger.info("Waiting for 150 seconds to get the summary from the system...")
-        time.sleep(100)
+        time.sleep(50)
+        logger.info("Waiting for 50 seconds to get the summary from the system...")
         
         jivi_system_summary = invoke_user_session_summary(
             session_id=session_id,
             env=env
         )
         
-        logger.info("Waiting for 150 seconds to get the ddx from the system...")
-        time.sleep(100)
-
         jivi_system_differential_diagnosis = invoke_user_differential_diagnosis(
             session_id=session_id,
             env=env,

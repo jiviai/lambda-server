@@ -40,6 +40,7 @@ def parse_conversation_history_response(
                 out['Response-QuestionAgent'] = None
                 out['Response-DifferentialDiagnosis'] = None
                 out['Response-IncrementalSummary'] = None
+                out['Response-PreliminaryDiagnosis'] = None
                 #out['Response'] = None
                 #out['moderator_response'] = None
                 ai_messages = message.get('data').get('additional_kwargs').get('agent_output')
@@ -58,6 +59,8 @@ def parse_conversation_history_response(
                         out['Response-Moderator'] = ai_message.get('data').get('content')
                     if ai_message.get('type') == 'incremental_summary':
                         out['Response-IncrementalSummary'] = ai_message.get('data').get('content')
+                    if ai_message.get('type') == 'ddx_incremental_summary':
+                        out['Response-PreliminaryDiagnosis'] = ai_message.get('data').get('content')
                 parsed_messages.append(out)
                 
                 

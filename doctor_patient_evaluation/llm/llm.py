@@ -4,7 +4,6 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.info("Loaded " + __name__)
 
-
 from langchain.prompts import PromptTemplate
 from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
@@ -15,7 +14,6 @@ from langchain.prompts import (
     MessagesPlaceholder,
     SystemMessagePromptTemplate,
 )
-
 
 class PatientAgent():
     def __init__(self):

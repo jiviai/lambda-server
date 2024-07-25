@@ -8,7 +8,7 @@ import json
 import requests
 import os
 
-AGENT_FRAMEWORK_URL = os.environ.get("AGENT_FRAMEWORK_URL", "https://api-server.jivihealth.org/ds/api/framework/uat")
+AGENT_FRAMEWORK_URL = os.environ.get("AGENT_FRAMEWORK_URL", "https://api.jivihealth.org/ds/api/framework")
 AGENT_FRAMEWORK_AUTH = os.environ.get("AGENT_FRAMEWORK_AUTH", "Basic ZHNfdXNlcjpkc0AxMjM=")
 
 CONTENT_AGENT_FRAMEWORK_MODEL_NAME = os.environ.get("CONTENT_AGENT_FRAMEWORK_MODEL_NAME", "gpt-4o-mini")

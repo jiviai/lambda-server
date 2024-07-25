@@ -53,3 +53,32 @@ def invoke_content_creation_agent(
   except Exception as e:
     logger.error("Exception in invoking content creation agent framework - %s", str(e), exc_info=True)
     return None
+  
+def invoke_language_translation_framework(
+    language,
+    obj,
+    ignore_keys
+):
+  try:
+    url = f"{AGENT_FRAMEWORK_URL}/v1/translate_json?ignore_keys={ignore_keys}"
+    
+    payload = json.dumps(obj)
+    
+    headers = {
+      'accept': 'application/json',
+      'Content-Type': 'application/json',
+      'language': language,
+      'Authorization': AGENT_FRAMEWORK_AUTH
+    }
+
+    response = requests.request("POST", url, headers=headers, data=payload, timeout=30)
+    logger.info("Response from translation framework - %s", response.text)
+
+    if response.status_code == 200:
+        out = response.json()
+        return out.get('result').get('translated')
+    
+    return None
+  except Exception as e:
+    logger.error("Exception in invoking translation framework - %s", str(e), exc_info=True)
+    return None

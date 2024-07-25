@@ -10,7 +10,7 @@ import os
 import concurrent.futures
 import uuid
 
-from search_content.api.api import invoke_content_creation_agent
+from search_content.api.api import invoke_content_creation_agent, invoke_language_translation_framework
 from search_content.utils import validate_dynamo_save_payload
 from search_content.db import DynamoDBClient
 

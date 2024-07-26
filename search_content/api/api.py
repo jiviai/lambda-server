@@ -11,8 +11,8 @@ import os
 AGENT_FRAMEWORK_URL = os.environ.get("AGENT_FRAMEWORK_URL", "https://api.jivihealth.org/ds/api/framework")
 AGENT_FRAMEWORK_AUTH = os.environ.get("AGENT_FRAMEWORK_AUTH", "Basic ZHNfdXNlcjpkc0AxMjM=")
 
-CONTENT_AGENT_FRAMEWORK_MODEL_NAME = os.environ.get("CONTENT_AGENT_FRAMEWORK_MODEL_NAME", "gpt-4o-mini")
-CONTENT_AGENT_FRAMEWORK_MODEL_PROVIDER = os.environ.get("CONTENT_AGENT_FRAMEWORK_MODEL_PROVIDER", "openai")
+CONTENT_AGENT_FRAMEWORK_MODEL_NAME = os.environ.get("CONTENT_AGENT_FRAMEWORK_MODEL_NAME", "llama3-70b-8192")
+CONTENT_AGENT_FRAMEWORK_MODEL_PROVIDER = os.environ.get("CONTENT_AGENT_FRAMEWORK_MODEL_PROVIDER", "groq")
 
 def invoke_content_creation_agent(
     agent_name: str,

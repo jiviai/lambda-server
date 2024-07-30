@@ -13,10 +13,14 @@ import uuid
 from search_content.api.api import invoke_content_creation_agent, invoke_language_translation_framework
 from search_content.utils import validate_dynamo_save_payload
 from search_content.db import DynamoDBClient
+from search_content.opensearch import OpensearchLoader
 
 dynamo_client = DynamoDBClient(
     table_name=f"query_search_result_{os.environ.get('CURRENT_STAGE','uat')}",
     region_name='ap-south-1'
+)
+opensearch_loader = OpensearchLoader(
+    index_name="jivi_search_content_index"
 )
 
 def lambda_handler(
@@ -34,6 +38,11 @@ def lambda_handler(
                 search_entity_keys = json.loads(new_image.get('search_entity_keys').get('S'))
                 entity = new_image.get('entity').get('S')
                 query = new_image.get('query').get('S')
+                query_original = new_image.get('query_original').get('S')
+                related_queries = json.loads(new_image.get('related_queries').get('S'))
+                embedding = json.loads(new_image.get('query_embedding').get('S'))
+                chat_response = new_image.get('chat_response').get('S')
+                language = new_image.get('language').get('S')
 
                 logger.info("Query ID: %s search_entity_keys: %s entity: %s query: %s", query_id, search_entity_keys, entity, query)
                 
@@ -73,6 +82,17 @@ def lambda_handler(
                                 'content': content,
                                 'created_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
                             }
+                            _save_opensearch = {
+                                "query_original":query_original,
+                                "query":query,
+                                "embedding":embedding,
+                                "entity":entity,
+                                "search_entity_keys":json.dumps(search_entity_keys),
+                                "related_queries":json.dumps(related_queries),
+                                "chat_response":chat_response,
+                                "language":language
+                            }
+                            opensearch_loader.save_obj(obj=_save_opensearch)
                             dynamo_client.add_item(item=validate_dynamo_save_payload(obj=_save))
                         except Exception as exc:
                             logger.error(f"API call with params {params} generated an exception: {exc}")

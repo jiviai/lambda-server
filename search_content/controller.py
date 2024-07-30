@@ -90,6 +90,8 @@ def lambda_handler(
                                 "search_entity_keys":json.dumps(search_entity_keys),
                                 "related_queries":json.dumps(related_queries),
                                 "chat_response":chat_response,
+                                "content": content,
+                                "topic": params['topic'],
                                 "language":language
                             }
                             opensearch_loader.save_obj(obj=_save_opensearch)

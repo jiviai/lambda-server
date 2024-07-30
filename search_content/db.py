@@ -30,6 +30,7 @@ class DynamoDBClient:
     def add_item(self, item):
         try:
             response = self.table.put_item(Item=item)
+            logger.info("Item saved to Dynamodb")
             return response
         except ClientError as e:
             logger.error("some Exception occured - {}".format(str(e)))

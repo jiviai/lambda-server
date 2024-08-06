@@ -6,13 +6,14 @@ logger.info("Loaded " + __name__)
 
 from datetime import datetime
 import json
+import os
 
 from evaluation_workflow.api.api import invoke_workflow_executor
 from evaluation_workflow.utils import validate_dynamo_save_payload
 from evaluation_workflow.db import DynamoDBClient
 
 dynamo_client = DynamoDBClient(
-    table_name='evaluation_workflow_result_dev',
+    table_name=f"evaluation_workflow_result_{os.environ.get('DEPLOYMENT_ENV','dev')}",
     region_name='ap-south-1'
 )
 
@@ -58,6 +59,24 @@ def lambda_handler(
                             obj=_save
                         )
                     )
+                    logger.info("Successfully saved the result in dynamo for reference id : %s", reference_id)
+                    logger.info("Agent Workflow Executor Successful")
+                else:
+                    _save = {}
+                    _save['reference_id'] = reference_id
+                    _save['reference_unique_id'] = reference_unique_id
+                    _save['workflow_id'] = workflow_id
+                    _save['reference_identity'] = reference_identity
+                    _save['execution_results'] = {}
+                    _save['execution_order'] = {}
+                    _save['status'] = 'failed'
+                    _save['created_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+                    dynamo_client.add_item(
+                        item=validate_dynamo_save_payload(
+                            obj=_save
+                        )
+                    )
+                    logger.info("Agent Workflow Executor failed")
                     logger.info("Successfully saved the result in dynamo for reference id : %s", reference_id)
             else:
                 logger.error("No new image found in the record or the image is broken")

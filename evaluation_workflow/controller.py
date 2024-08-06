@@ -44,15 +44,17 @@ def lambda_handler(
                     image_urls=image_urls
                 )
                 
-                if executor_result:
+                if executor_result.get('output'):
                     _save = {}
                     _save['reference_id'] = reference_id
                     _save['reference_unique_id'] = reference_unique_id
                     _save['workflow_id'] = workflow_id
                     _save['reference_identity'] = reference_identity
-                    _save['execution_results'] = executor_result.get('result').get('execution_results')
-                    _save['execution_order'] = executor_result.get('result').get('execution_order')
+                    _save['execution_results'] = executor_result.get('output').get('result').get('execution_results')
+                    _save['execution_order'] = executor_result.get('output').get('result').get('execution_order')
                     _save['status'] = 'success'
+                    _save['api_status_code'] = executor_result.get('status_code')
+                    _save['api_raw_output'] = executor_result.get('message')
                     _save['created_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
                     dynamo_client.add_item(
                         item=validate_dynamo_save_payload(
@@ -70,6 +72,8 @@ def lambda_handler(
                     _save['execution_results'] = {}
                     _save['execution_order'] = {}
                     _save['status'] = 'failed'
+                    _save['api_status_code'] = executor_result.get('status_code')
+                    _save['api_raw_output'] = executor_result.get('message')
                     _save['created_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
                     dynamo_client.add_item(
                         item=validate_dynamo_save_payload(

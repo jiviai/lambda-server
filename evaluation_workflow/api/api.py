@@ -36,6 +36,14 @@ def invoke_workflow_executor(
     logger.info(f"Response from workflow invocation - {response.text} with status - {response.status_code}")
 
     if response.status_code == 200:
-        return response.json()
+        return {
+            "output":response.json(),
+            "status_code":response.status_code,
+            "message":response.text
+        }
     
-    return None
+    return {
+        "output":None,
+        "status_code":response.status_code,
+        "message":response.text
+    }

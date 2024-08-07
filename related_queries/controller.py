@@ -12,7 +12,7 @@ from related_queries.api.api import invoke_related_queries_agent, invoke_embeddi
 from related_queries.opensearch import OpensearchLoader
 
 opensearch_loader = OpensearchLoader(
-    index_name="jivi_related_searches_index"
+    index_name=os.environ.get("RELATED_SEARCHES_INDEX_NAME","jivi_related_searches_index")
 )
 
 def lambda_handler(

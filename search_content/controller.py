@@ -20,7 +20,7 @@ dynamo_client = DynamoDBClient(
     region_name='ap-south-1'
 )
 opensearch_loader = OpensearchLoader(
-    index_name="jivi_search_content_index"
+    index_name=os.environ.get("CONTENT_CACHE_EMBEDDING_INDEX","jivi_search_content_index")
 )
 
 def lambda_handler(
@@ -48,7 +48,7 @@ def lambda_handler(
                 
                 api_payloads = [
                         {
-                            'agent_name': 'user_query_topic_v1',
+                            'agent_name': os.environ.get('CONTENT_CREATION_AGENT_NAME','user_query_topic_v1'),
                             'query': query,
                             'entity': entity,
                             'topic': key

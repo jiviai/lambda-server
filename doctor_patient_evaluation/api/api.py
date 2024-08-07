@@ -51,7 +51,7 @@ def invoke_user_session_summary(
     endpoint = CONFIG.get(env).get('endpoint')
     auth = CONFIG.get(env).get('auth')
     
-    url = f"https://api-server.jivihealth.org/ds/api/uat/v1/user_session_summary?cache=true&force_cache=false"
+    url = f"https://api.jivihealth.org/ds/api/v1/user_session_summary?cache=true&force_cache=false"
     logger.info(f"endpoint from config for session summary - {url}")
 
     payload = json.dumps({
@@ -87,7 +87,7 @@ def invoke_user_differential_diagnosis(
     endpoint = CONFIG.get(env).get('endpoint')
     auth = CONFIG.get(env).get('auth')
 
-    url = f"https://api-server.jivihealth.org/ds/api/uat/v1/user_differential_diagnosis?cache=true&force_cache=false"
+    url = f"https://api.jivihealth.org/ds/api/v1/user_differential_diagnosis?cache=true&force_cache=false"
     logger.info(f"endpoint from config for diagnosis - {url}")
 
     payload = json.dumps({
@@ -145,7 +145,7 @@ def invoke_user_conversation(
       endpoint = CONFIG.get(env).get('endpoint')
       auth = CONFIG.get(env).get('auth')
 
-      url = f"https://api-server.jivihealth.org/ds/api/uat/v1/user_conv_qa_search"
+      url = f"https://api.jivihealth.org/ds/api/v1/user_conv_qa_search"
       logger.info(f"endpoint from config for user conversation - {url}")
 
       payload = json.dumps({

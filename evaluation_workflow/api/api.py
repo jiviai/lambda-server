@@ -31,7 +31,7 @@ def invoke_workflow_executor(
         headers=headers,
         data=payload,
         files=files,
-        timeout=100
+        timeout=300
     )
     logger.info(f"Response from workflow invocation - {response.text} with status - {response.status_code}")
 

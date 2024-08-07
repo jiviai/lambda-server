@@ -52,9 +52,12 @@ def lambda_handler(
                     _save['reference_identity'] = reference_identity
                     _save['execution_results'] = executor_result.get('output').get('result').get('execution_results')
                     _save['execution_order'] = executor_result.get('output').get('result').get('execution_order')
+                    _save['execution_final_output'] = executor_result.get('output').get('result').get('final_result')
                     _save['status'] = 'success'
                     _save['api_status_code'] = executor_result.get('status_code')
                     _save['api_raw_output'] = executor_result.get('message')
+                    _save['input_args'] = input_args
+                    _save['image_urls'] = image_urls
                     _save['created_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
                     dynamo_client.add_item(
                         item=validate_dynamo_save_payload(
@@ -71,16 +74,19 @@ def lambda_handler(
                     _save['reference_identity'] = reference_identity
                     _save['execution_results'] = {}
                     _save['execution_order'] = {}
+                    _save['execution_final_output'] = {}
                     _save['status'] = 'failed'
                     _save['api_status_code'] = executor_result.get('status_code')
                     _save['api_raw_output'] = executor_result.get('message')
+                    _save['input_args'] = input_args
+                    _save['image_urls'] = image_urls
                     _save['created_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
                     dynamo_client.add_item(
                         item=validate_dynamo_save_payload(
                             obj=_save
                         )
                     )
-                    logger.info("Agent Workflow Executor failed")
+                    logger.info("Agent Workflow Executor Failed")
                     logger.info("Successfully saved the result in dynamo for reference id : %s", reference_id)
             else:
                 logger.error("No new image found in the record or the image is broken")

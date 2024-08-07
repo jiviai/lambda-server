@@ -56,8 +56,8 @@ def invoke_related_queries_agent(
             "input_args": {
                 "query": query
             },
-            "model_name": CONTENT_AGENT_FRAMEWORK_MODEL_NAME,
-            "model_provider": CONTENT_AGENT_FRAMEWORK_MODEL_PROVIDER,
+            "model_name": RELATED_QUERIES_AGENT_FRAMEWORK_MODEL_NAME,
+            "model_provider": RELATED_QUERIES_AGENT_FRAMEWORK_MODEL_PROVIDER,
             "chat": False
         })
 

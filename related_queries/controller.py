@@ -8,7 +8,7 @@ from datetime import datetime
 import json
 import os
 
-from related_queries.api.api import invoke_related_queries_agent, invoke_embedding
+from related_queries.api.api import invoke_related_queries_agent, invoke_embedding, invoke_search_api
 from related_queries.opensearch import OpensearchLoader
 
 opensearch_loader = OpensearchLoader(
@@ -27,6 +27,7 @@ def lambda_handler(
 
             if new_image is not None:
                 query = new_image.get('query').get('S')
+                language = new_image.get('language').get('S')
                 
                 logger.info("Query: %s", query)
                                 
@@ -43,6 +44,11 @@ def lambda_handler(
                             text=result,
                             model_name=os.environ.get('DEFAULT_EMBEDDING_MODEL','sentence-transformers/all-MiniLM-L12-v2')
                         )
+                        _med_classifier_response = invoke_search_api(
+                            query=result,
+                            language=language
+                        )
+                        logger.info("med classifier invoked response - %s", _med_classifier_response)
                         if embedding_response:
                             embedding = embedding_response.get('result').get('embedding')[0]
                             _save_opensearch['query'] = result

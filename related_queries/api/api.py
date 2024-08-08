@@ -11,6 +11,9 @@ import os
 EMBEDDING_SERVER_URL = os.environ.get("EMBEDDING_SERVER_URL", "https://api-server-stage.jivihealth.org/ds/api/utils/v1/embeddings")
 EMBEDDING_SERVER_AUTH = os.environ.get("EMBEDDING_SERVER_AUTH", "Basic ZHNfdXNlcjpkc0AxMjM=")
 
+MED_CLASSIFIER_SERVER_URL = os.environ.get("MED_CLASSIFIER_SERVER_URL", "https://api-server.jivihealth.org/ds/api/med_classifier")
+MED_CLASSIFIER_SERVER_AUTH = os.environ.get("MED_CLASSIFIER_SERVER_AUTH", "Basic ZHNfdXNlcjpkc0AxMjM=")
+
 AGENT_FRAMEWORK_URL = os.environ.get("AGENT_FRAMEWORK_URL", "https://api-server.jivihealth.org/ds/api/framework/uat")
 AGENT_FRAMEWORK_AUTH = os.environ.get("AGENT_FRAMEWORK_AUTH", "Basic ZHNfdXNlcjpkc0AxMjM=")
 
@@ -107,4 +110,33 @@ def invoke_language_translation_framework(
     return None
   except Exception as e:
     logger.error("Exception in invoking translation framework - %s", str(e), exc_info=True)
+    return None
+  
+def invoke_search_api(
+  query: str,
+  language: str
+):
+  try:
+    url = f"{MED_CLASSIFIER_SERVER_URL}/v1/classify_query"
+
+    payload = json.dumps({
+      "user_id": "content-user-id",
+      "query": query
+    })
+    headers = {
+      'language': language,
+      'Content-Type': 'application/json',
+      'Authorization': MED_CLASSIFIER_SERVER_AUTH
+    }
+
+    response = requests.request("POST", url, headers=headers, data=payload, timeout=60)
+
+    if response.status_code == 200:
+      out = response.json()
+      return out.get('result')
+      
+    return None
+    
+  except Exception as e:
+    logger.error("Exception in invoking search framework - %s", str(e), exc_info=True)
     return None

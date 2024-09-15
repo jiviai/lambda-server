@@ -4,6 +4,8 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.info("Loaded " + __name__)
 
+import zlib, base64
+
 from datetime import datetime
 import json
 import os
@@ -45,49 +47,62 @@ def lambda_handler(
                 )
                 
                 if executor_result.get('output'):
+                    
+                    logger.info("Agent Workflow Executor Successful")
                     _save = {}
                     _save['reference_id'] = reference_id
                     _save['reference_unique_id'] = reference_unique_id
                     _save['workflow_id'] = workflow_id
                     _save['reference_identity'] = reference_identity
-                    _save['execution_results'] = executor_result.get('output').get('result').get('execution_results')
+                    #_save['execution_results'] = executor_result.get('output').get('result').get('execution_results')
                     _save['execution_order'] = executor_result.get('output').get('result').get('execution_order')
                     _save['execution_final_output'] = executor_result.get('output').get('result').get('final_result')
                     _save['status'] = 'success'
                     _save['api_status_code'] = executor_result.get('status_code')
-                    _save['api_raw_output'] = executor_result.get('message')
-                    _save['input_args'] = input_args
+                    _save['api_raw_output'] = base64.b64encode(zlib.compress(bytes(executor_result.get('message'), encoding='utf-8'))).decode()
                     _save['image_urls'] = image_urls
+                    _save['input_args'] = input_args
                     _save['created_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-                    dynamo_client.add_item(
-                        item=validate_dynamo_save_payload(
-                            obj=_save
+                    try:
+                        logger.info("Saving the result in dynamo for object : %s", _save)
+                        dynamo_client.add_item(
+                            item=validate_dynamo_save_payload(
+                                obj=_save
+                            )
                         )
-                    )
-                    logger.info("Successfully saved the result in dynamo for reference id : %s", reference_id)
-                    logger.info("Agent Workflow Executor Successful")
+                        logger.info("Successfully saved the result in dynamo for reference id : %s", reference_id)
+                    except Exception as e:
+                        logger.error("Error while saving the result in dynamo for reference id : %s", reference_id)
+                        logger.error("Error: %s", e, exc_info=True)
+                        
                 else:
+                    logger.info("Agent Workflow Executor Failed")
                     _save = {}
                     _save['reference_id'] = reference_id
                     _save['reference_unique_id'] = reference_unique_id
                     _save['workflow_id'] = workflow_id
                     _save['reference_identity'] = reference_identity
-                    _save['execution_results'] = {}
+                    #_save['execution_results'] = {}
                     _save['execution_order'] = {}
                     _save['execution_final_output'] = {}
                     _save['status'] = 'failed'
                     _save['api_status_code'] = executor_result.get('status_code')
-                    _save['api_raw_output'] = executor_result.get('message')
+                    _save['api_raw_output'] = base64.b64encode(zlib.compress(bytes(executor_result.get('message'), encoding='utf-8'))).decode()
                     _save['input_args'] = input_args
                     _save['image_urls'] = image_urls
                     _save['created_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-                    dynamo_client.add_item(
-                        item=validate_dynamo_save_payload(
-                            obj=_save
+                    try:
+                        logger.info("Saving the result in dynamo for object : %s", _save)
+                        dynamo_client.add_item(
+                            item=validate_dynamo_save_payload(
+                                obj=_save
+                            )
                         )
-                    )
-                    logger.info("Agent Workflow Executor Failed")
-                    logger.info("Successfully saved the result in dynamo for reference id : %s", reference_id)
+                        logger.info("Successfully saved the result in dynamo for reference id : %s", reference_id)
+                    except Exception as e:
+                        logger.error("Error while saving the result in dynamo for reference id : %s", reference_id)
+                        logger.error("Error: %s", e, exc_info=True)
+                        
             else:
                 logger.error("No new image found in the record or the image is broken")
             

@@ -28,9 +28,11 @@ def lambda_handler(
             if new_image is not None:
                 query = new_image.get('query').get('S')
                 language = new_image.get('language').get('S')
+                entity = new_image.get('entity').get('S')
                 
-                logger.info("Query: %s", query)
-                                
+                logger.info("Query: %s Entity: %s", query, entity)
+                
+                if entity not in ["GENERAL", "NON_MEDICAL"]:
                 #Invoke Agent API
                 agent_result = invoke_related_queries_agent(
                     agent_name="autocomplete_related_queries_v1",
@@ -44,11 +46,11 @@ def lambda_handler(
                             text=result,
                             model_name=os.environ.get('DEFAULT_EMBEDDING_MODEL','sentence-transformers/all-MiniLM-L12-v2')
                         )
-                        _med_classifier_response = invoke_search_api(
-                            query=result,
-                            language=language
-                        )
-                        logger.info("med classifier invoked response - %s", _med_classifier_response)
+                        # _med_classifier_response = invoke_search_api(
+                        #     query=result,
+                        #     language=language
+                        # )
+                        # logger.info("med classifier invoked response - %s", _med_classifier_response)
                         if embedding_response:
                             embedding = embedding_response.get('result').get('embedding')[0]
                             _save_opensearch['query'] = result

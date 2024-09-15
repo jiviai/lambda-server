@@ -4,29 +4,29 @@
    - **Event**: The workflow begins with a trigger event.
    - **Explanation**: This may be a user action, scheduled job, or any system event that generates an entry in the DynamoDB table.
 
-2. **Event Triggered (DynamoDB Entry)**
+2. **Event Triggered**
    - **Event**: New data entry is added to DynamoDB.
    - **Explanation**: AWS DynamoDB detects the new entry and triggers an AWS Lambda function to process this data.
 
-3. **AWS Lambda Function Triggered**
+3. **Lambda Function Triggered**
    - **Function**: A Lambda function is automatically invoked.
-   - **Explanation**: The Lambda function is set up to trigger based on the DynamoDB event. It retrieves the new entry for further processing.
+   - **Explanation**: The Lambda function retrieves the new entry for further processing.
 
-4. **Flatten Data in Lambda**
+4. **Flatten Data**
    - **Process**: Data flattening and normalization.
-   - **Explanation**: The Lambda function processes the DynamoDB entry. It extracts necessary fields, normalizes the structure, and flattens the data to ensure it is in a suitable format for insertion into PostgreSQL.
+   - **Explanation**: The Lambda function processes the DynamoDB entry. It extracts necessary fields, normalizes the structure, and flattens the data.
 
-5. **Insert Flattened Data into PostgreSQL Ledger Table**
+5. **Insert into Ledger Table**
    - **Process**: Data insertion into PostgreSQL.
-   - **Explanation**: The processed and normalized data is then inserted into a ledger table in a PostgreSQL database. This table categorizes data based on types (weight, totalCalories, height) and sources (Health Connect, FITBIT).
+   - **Explanation**: The processed data is inserted into a ledger table in a PostgreSQL database. This table categorizes data based on types and sources.
 
-6. **Perform Data Aggregation**
+6. **Perform Aggregation**
    - **Process**: Aggregation based on user_id.
-   - **Explanation**: Once data is inserted into the ledger table, an aggregation process occurs. This involves running queries or operations to aggregate the data by user_id, calculating sums, averages, or other necessary metrics.
+   - **Explanation**: After insertion, an aggregation process occurs to calculate sums, averages, or other necessary metrics by user_id.
 
-7. **Insert Aggregated Data into Second Table**
+7. **Insert into Aggregated Table**
    - **Process**: Insert aggregated data.
-   - **Explanation**: The aggregated results are then inserted into a secondary table in the PostgreSQL database. This table is structured to organize aggregated data based on user_id.
+   - **Explanation**: The aggregated results are inserted into a secondary table in the PostgreSQL database, organized by user_id.
 
 8. **End**
    - **Event**: The workflow process completes.
@@ -38,10 +38,11 @@
 
 ```mermaid
 graph TD
-    A[Start] --> B[Event Triggered (DynamoDB Entry)]
-    B --> C[AWS Lambda Function Triggered]
-    C --> D[Flatten Data in Lambda]
-    D --> E[Insert Flattened Data into PostgreSQL Ledger Table]
-    E --> F[Perform Data Aggregation]
-    F --> G[Insert Aggregated Data into Second Table]
+    A[Start] --> B[Event Triggered]
+    B --> C[Lambda Function Triggered]
+    C --> D[Flatten Data]
+    D --> E[Insert into Ledger Table]
+    E --> F[Perform Aggregation]
+    F --> G[Insert into Aggregated Table]
     G --> H[End]
+```

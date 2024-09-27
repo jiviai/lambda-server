@@ -33,11 +33,11 @@ def lambda_handler(
                 logger.info("Query: %s Entity: %s", query, entity)
                 
                 if entity not in ["GENERAL", "NON_MEDICAL"]:
-                #Invoke Agent API
-                agent_result = invoke_related_queries_agent(
-                    agent_name="autocomplete_related_queries_v1",
-                    query=query
-                )
+                    #Invoke Agent API
+                    agent_result = invoke_related_queries_agent(
+                        agent_name="autocomplete_related_queries_v1",
+                        query=query
+                    )
                 
                 if agent_result:
                     for result in agent_result:

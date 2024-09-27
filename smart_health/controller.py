@@ -4,37 +4,226 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.info("Loaded " + __name__)
 
-import psycopg2
-import json
-from boto3.dynamodb.types import TypeDeserializer
+import os
 
-def deserialize_dynamodb_item(item):
-    deserializer = TypeDeserializer()
+from smart_health.utils import deserialize_dynamo_event
+#from smart_health.parser import invoke_health_transform
+from smart_health.db import PostgresDBHandler
+from smart_health.processor import (
+    transform_heart_rate_variability,
+    transform_heart_rate,
+    transform_resting_heart_rate,
+    transform_steps,
+    transform_distance,
+    transform_total_calories_burned,
+    transform_floors_climbed
+)
 
-    def deserialize(value):
-        if isinstance(value, dict):
-            if len(value) == 1 and list(value.keys())[0] in deserializer._dispatch:
-                # It must be a DynamoDB type
-                return deserializer.deserialize(value)
-            else:
-                # It's a dict with multiple keys
-                return {k: deserialize(v) for k, v in value.items()}
-        elif isinstance(value, list):
-            return [deserialize(v) for v in value]
-        else:
-            return value
-
-    return deserialize(item)
+db_handler = PostgresDBHandler(
+    host=os.environ.get('postgres_host'),
+    database=os.environ.get('postgres_db'),
+    user=os.environ.get('postgres_user'),
+    password=os.environ.get('postgres_password')
+)
 
 def lambda_handler(
     event,
     context
 ):
+    
     for record in event['Records']:
-        logger.info(f"Row for dynamo: {record}")
-        
-        if record['eventName'] == 'INSERT':
-            new_image = record.get('dynamodb').get('NewImage')
+        logger.info("Processing record: %s", record)
 
-            if new_image is not None:
-                user_id = new_image.get('user_id').get('S')
+        # Process only 'INSERT' events
+        if record['eventName'] == 'INSERT':
+            dynamodb_record = record.get('dynamodb', {})
+            new_image = dynamodb_record.get('NewImage', {})
+            if new_image:
+                serialized_dynamo_dict = deserialize_dynamo_event(
+                    dynamo_record=new_image
+                )
+                user_id = serialized_dynamo_dict.get('user_id')
+                source = serialized_dynamo_dict.get('source')
+                record_type = serialized_dynamo_dict.get('type')
+                logger.info("Data received for user_id: %s, source: %s, type: %s", user_id, source, record_type)
+
+                if record_type == 'HeartRateVariabilityRmssd':
+                    transformed_records = transform_heart_rate_variability(
+                        item=serialized_dynamo_dict
+                    )
+                    
+                    if len(transformed_records) == 0:
+                        logger.warning("No records found for user_id: %s", user_id)
+                        return
+                    
+                    columns = [
+                        'user_id',
+                        'source',
+                        'start_time',
+                        'end_time',
+                        'dynamo_created_at',
+                        'heart_rate_variability',
+                        'last_modified_time',
+                        'recorded_time'
+                    ]
+                    conflict_columns = None
+                    logger.info("Transformed records: %s", transformed_records)
+                    db_handler.connect()
+                    db_handler.write_many('heart_rate_variability_rmssd', transformed_records, columns, conflict_columns=conflict_columns)
+                    db_handler.disconnect()
+                    
+                if record_type == 'HeartRate':
+                    transformed_records = transform_heart_rate(
+                        item=serialized_dynamo_dict
+                    )
+                    
+                    if len(transformed_records) == 0:
+                        logger.warning("No records found for user_id: %s", user_id)
+                        return
+                    
+                    columns = [
+                        'user_id',
+                        'source',
+                        'start_time',
+                        'end_time',
+                        'dynamo_created_at',
+                        'beats_per_minute',
+                        'last_modified_time',
+                        'recorded_time'
+                    ]
+                    conflict_columns = None
+                    logger.info("Transformed records: %s", transformed_records)
+                    db_handler.connect()
+                    db_handler.write_many('heart_rate', transformed_records, columns, conflict_columns=conflict_columns)
+                    db_handler.disconnect()
+                
+                if record_type == 'RestingHeartRate':
+                    transformed_records = transform_resting_heart_rate(
+                        item=serialized_dynamo_dict
+                    )
+                    
+                    if len(transformed_records) == 0:
+                        logger.warning("No records found for user_id: %s", user_id)
+                        return
+                    
+                    columns = [
+                        'user_id',
+                        'source',
+                        'start_time',
+                        'end_time',
+                        'dynamo_created_at',
+                        'beats_per_minute',
+                        'last_modified_time',
+                        'recorded_time'
+                    ]
+                    conflict_columns = None
+                    logger.info("Transformed records: %s", transformed_records)
+                    db_handler.connect()
+                    db_handler.write_many('resting_heart_rate', transformed_records, columns, conflict_columns=conflict_columns)
+                    db_handler.disconnect()
+                    
+                if record_type == 'Steps':
+                    transformed_records = transform_steps(
+                        item=serialized_dynamo_dict
+                    )
+                    
+                    if len(transformed_records) == 0:
+                        logger.warning("No records found for user_id: %s", user_id)
+                        return
+                    
+                    columns = [
+                        'user_id',
+                        'source',
+                        'start_time',
+                        'end_time',
+                        'dynamo_created_at',
+                        'steps',
+                        'last_modified_time',
+                        'recorded_time'
+                    ]
+                    conflict_columns = None
+                    logger.info("Transformed records: %s", transformed_records)
+                    db_handler.connect()
+                    db_handler.write_many('steps', transformed_records, columns, conflict_columns=conflict_columns)
+                    db_handler.disconnect()
+                    
+                if record_type == 'Distance':
+                    transformed_records = transform_distance(
+                        item=serialized_dynamo_dict
+                    )
+                    
+                    if len(transformed_records) == 0:
+                        logger.warning("No records found for user_id: %s", user_id)
+                        return
+                    
+                    columns = [
+                        'user_id',
+                        'source',
+                        'start_time',
+                        'end_time',
+                        'dynamo_created_at',
+                        'distance',
+                        'last_modified_time',
+                        'recorded_time'
+                    ]
+                    conflict_columns = None
+                    logger.info("Transformed records: %s", transformed_records)
+                    db_handler.connect()
+                    db_handler.write_many('distance', transformed_records, columns, conflict_columns=conflict_columns)
+                    db_handler.disconnect()
+                    
+                if record_type == 'TotalCaloriesBurned':
+                    transformed_records = transform_total_calories_burned(
+                        item=serialized_dynamo_dict
+                    )
+                    
+                    if len(transformed_records) == 0:
+                        logger.warning("No records found for user_id: %s", user_id)
+                        return
+                    
+                    columns = [
+                        'user_id',
+                        'source',
+                        'start_time',
+                        'end_time',
+                        'dynamo_created_at',
+                        'calories',
+                        'last_modified_time',
+                        'recorded_time'
+                    ]
+                    conflict_columns = None
+                    logger.info("Transformed records: %s", transformed_records)
+                    db_handler.connect()
+                    db_handler.write_many('total_calories_burned', transformed_records, columns, conflict_columns=conflict_columns)
+                    db_handler.disconnect()
+                    
+                if record_type == 'FloorsClimbed':
+                    transformed_records = transform_floors_climbed(
+                        item=serialized_dynamo_dict
+                    )
+                    
+                    if len(transformed_records) == 0:
+                        logger.warning("No records found for user_id: %s", user_id)
+                        return
+                    
+                    columns = [
+                        'user_id',
+                        'source',
+                        'start_time',
+                        'end_time',
+                        'dynamo_created_at',
+                        'floors',
+                        'last_modified_time',
+                        'recorded_time'
+                    ]
+                    conflict_columns = None
+                    logger.info("Transformed records: %s", transformed_records)
+                    db_handler.connect()
+                    db_handler.write_many('floors_climbed', transformed_records, columns, conflict_columns=conflict_columns)
+                    db_handler.disconnect()
+                # transformed_records = invoke_health_transform(
+                #     item=serialized_dynamo_dict
+                # )
+
+
+                

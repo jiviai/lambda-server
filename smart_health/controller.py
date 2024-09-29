@@ -6,7 +6,7 @@ logger.info("Loaded " + __name__)
 
 import os
 
-from smart_health.utils import deserialize_dynamo_event
+from smart_health.utils import deserialize_dynamo_event, deduplicate_by_keys
 #from smart_health.parser import invoke_health_transform
 from smart_health.db import PostgresDBHandler
 from smart_health.processor import (
@@ -25,6 +25,7 @@ db_handler = PostgresDBHandler(
     user=os.environ.get('postgres_user'),
     password=os.environ.get('postgres_password')
 )
+DB_DEDUPE_ENABLE = bool(os.environ.get('db_dedupe_enable', 1))
 
 def lambda_handler(
     event,
@@ -64,10 +65,20 @@ def lambda_handler(
                         'dynamo_created_at',
                         'heart_rate_variability',
                         'last_modified_time',
-                        'recorded_time'
+                        'recorded_time',
+                        'activity_start_time',
+                        'activity_end_time'
                     ]
                     conflict_columns = None
-                    logger.info("Transformed records: %s", transformed_records)
+                    logger.info("Transformed records: %s with size %s", transformed_records, len(transformed_records))
+                    
+                    if DB_DEDUPE_ENABLE is True:
+                        transformed_records = deduplicate_by_keys(
+                            dict_list=transformed_records,
+                            keys=['source', 'activity_end_time']
+                        )
+                        logger.info("Deduplicated records: %s with size %s", transformed_records, len(transformed_records))
+                    
                     db_handler.connect()
                     db_handler.write_many('heart_rate_variability_rmssd', transformed_records, columns, conflict_columns=conflict_columns)
                     db_handler.disconnect()
@@ -89,10 +100,20 @@ def lambda_handler(
                         'dynamo_created_at',
                         'beats_per_minute',
                         'last_modified_time',
-                        'recorded_time'
+                        'recorded_time',
+                        'activity_start_time',
+                        'activity_end_time'
                     ]
                     conflict_columns = None
                     logger.info("Transformed records: %s", transformed_records)
+                    
+                    if DB_DEDUPE_ENABLE is True:
+                        transformed_records = deduplicate_by_keys(
+                            dict_list=transformed_records,
+                            keys=['source', 'activity_end_time']
+                        )
+                        logger.info("Deduplicated records: %s with size %s", transformed_records, len(transformed_records))
+                    
                     db_handler.connect()
                     db_handler.write_many('heart_rate', transformed_records, columns, conflict_columns=conflict_columns)
                     db_handler.disconnect()
@@ -114,10 +135,20 @@ def lambda_handler(
                         'dynamo_created_at',
                         'beats_per_minute',
                         'last_modified_time',
-                        'recorded_time'
+                        'recorded_time',
+                        'activity_start_time',
+                        'activity_end_time'
                     ]
                     conflict_columns = None
                     logger.info("Transformed records: %s", transformed_records)
+                    
+                    if DB_DEDUPE_ENABLE is True:
+                        transformed_records = deduplicate_by_keys(
+                            dict_list=transformed_records,
+                            keys=['source', 'activity_end_time']
+                        )
+                        logger.info("Deduplicated records: %s with size %s", transformed_records, len(transformed_records))
+                    
                     db_handler.connect()
                     db_handler.write_many('resting_heart_rate', transformed_records, columns, conflict_columns=conflict_columns)
                     db_handler.disconnect()
@@ -139,10 +170,20 @@ def lambda_handler(
                         'dynamo_created_at',
                         'steps',
                         'last_modified_time',
-                        'recorded_time'
+                        'recorded_time',
+                        'activity_start_time',
+                        'activity_end_time'
                     ]
                     conflict_columns = None
                     logger.info("Transformed records: %s", transformed_records)
+                    
+                    if DB_DEDUPE_ENABLE is True:
+                        transformed_records = deduplicate_by_keys(
+                            dict_list=transformed_records,
+                            keys=['source', 'activity_end_time']
+                        )
+                        logger.info("Deduplicated records: %s with size %s", transformed_records, len(transformed_records))
+                    
                     db_handler.connect()
                     db_handler.write_many('steps', transformed_records, columns, conflict_columns=conflict_columns)
                     db_handler.disconnect()
@@ -164,10 +205,20 @@ def lambda_handler(
                         'dynamo_created_at',
                         'distance',
                         'last_modified_time',
-                        'recorded_time'
+                        'recorded_time',
+                        'activity_start_time',
+                        'activity_end_time'
                     ]
                     conflict_columns = None
                     logger.info("Transformed records: %s", transformed_records)
+                    
+                    if DB_DEDUPE_ENABLE is True:
+                        transformed_records = deduplicate_by_keys(
+                            dict_list=transformed_records,
+                            keys=['source', 'activity_end_time']
+                        )
+                        logger.info("Deduplicated records: %s with size %s", transformed_records, len(transformed_records))
+                    
                     db_handler.connect()
                     db_handler.write_many('distance', transformed_records, columns, conflict_columns=conflict_columns)
                     db_handler.disconnect()
@@ -189,10 +240,20 @@ def lambda_handler(
                         'dynamo_created_at',
                         'calories',
                         'last_modified_time',
-                        'recorded_time'
+                        'recorded_time',  
+                        'activity_start_time',
+                        'activity_end_time'
                     ]
                     conflict_columns = None
                     logger.info("Transformed records: %s", transformed_records)
+                    
+                    if DB_DEDUPE_ENABLE is True:
+                        transformed_records = deduplicate_by_keys(
+                            dict_list=transformed_records,
+                            keys=['source', 'activity_end_time']
+                        )
+                        logger.info("Deduplicated records: %s with size %s", transformed_records, len(transformed_records))
+                    
                     db_handler.connect()
                     db_handler.write_many('total_calories_burned', transformed_records, columns, conflict_columns=conflict_columns)
                     db_handler.disconnect()
@@ -214,10 +275,20 @@ def lambda_handler(
                         'dynamo_created_at',
                         'floors',
                         'last_modified_time',
-                        'recorded_time'
+                        'recorded_time',
+                        'activity_start_time',
+                        'activity_end_time'
                     ]
                     conflict_columns = None
                     logger.info("Transformed records: %s", transformed_records)
+                    
+                    if DB_DEDUPE_ENABLE is True:
+                        transformed_records = deduplicate_by_keys(
+                            dict_list=transformed_records,
+                            keys=['source', 'activity_end_time']
+                        )
+                        logger.info("Deduplicated records: %s with size %s", transformed_records, len(transformed_records))
+                    
                     db_handler.connect()
                     db_handler.write_many('floors_climbed', transformed_records, columns, conflict_columns=conflict_columns)
                     db_handler.disconnect()

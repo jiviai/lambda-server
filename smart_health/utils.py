@@ -39,9 +39,58 @@ def parse_zone_timestamp(
     # Parse the UTC timestamp
     dt = datetime.strptime(timestamp, '%Y-%m-%dT%H:%M:%S.%fZ')
     
-    # Add 5 hours and 30 minutes to convert to IST
+    #Add 5 hours and 30 minutes to convert to IST
     ist = dt + timedelta(hours=5, minutes=30)
     
     # Format the datetime in IST
     formatted_dt = ist.strftime('%Y-%m-%d %H:%M:%S')
     return formatted_dt
+
+def convert_to_ist(iso_string: str) -> str:
+    try:
+        parsers_list = [
+            '%Y-%m-%dT%H:%M:%S.%fZ',  # For strings with milliseconds
+            '%Y-%m-%dT%H:%M:%SZ',# For strings without milliseconds
+            '%Y-%m-%d %H:%M:%S',  # For standard
+            '%Y-%m-%d %H:%M:%S.%f',  # For standard with ms
+        ]
+        
+        # Try each format in parsers_list to parse the input ISO format string
+        for parser in parsers_list:
+            try:
+                # Parse the input ISO string to a UTC datetime object
+                dt_utc = datetime.strptime(iso_string, parser)
+                break  # Exit the loop if successful
+            except ValueError:
+                continue  # Try the next format if parsing fails
+        else:
+            # Raise an exception if no format matches
+            raise ValueError(f"Invalid ISO format: {iso_string}")
+        
+        # India Standard Time (IST) is UTC+5:30
+        # ist_offset = timedelta(hours=5, minutes=30)
+        
+        # # Add the IST offset to the UTC time
+        # dt_ist = dt_utc + ist_offset
+        
+        # Format the IST datetime to the desired format 'YYYY-MM-DD HH:MM:SS'
+        return dt_utc.strftime('%Y-%m-%d %H:%M:%S')
+    
+    except Exception as e:
+        logger.error(f"Error converting to IST: {e} {iso_string}")
+        return None
+    
+def deduplicate_by_keys(
+    dict_list,
+    keys
+):
+    if len(keys) == 0:
+        return dict_list
+
+    seen = {}
+    for d in reversed(dict_list):
+        key = tuple(d[k] for k in keys)
+        if key not in seen:
+            seen[key] = d
+
+    return list(reversed(seen.values()))

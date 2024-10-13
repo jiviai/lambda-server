@@ -6,7 +6,9 @@ logger.info("Loaded " + __name__)
 
 from boto3.dynamodb.types import TypeDeserializer
 from datetime import datetime, timedelta
-import pytz
+#import pytz
+import boto3
+import json
 
 def remove_duplicates(data_list, conflict_columns):
     try:
@@ -133,3 +135,25 @@ def deduplicate_by_keys(
             seen[key] = d
 
     return list(reversed(seen.values()))
+
+def read_json_as_dict_from_s3(
+    bucket,
+    key
+):
+    try:
+        # Create an S3 client
+        s3_client = boto3.client('s3', region_name='ap-south-1')
+
+        # Get the object from the S3 bucket
+        response = s3_client.get_object(Bucket=bucket, Key=key)
+
+        # Read the content of the file
+        content = response['Body'].read().decode('utf-8')
+
+        # Parse the JSON content into a Python dictionary
+        json_dict = json.loads(content)
+
+        return json_dict
+    except Exception as e:
+        logger.error(f"Error reading JSON from S3: {e}", exc_info=True)
+        return {}

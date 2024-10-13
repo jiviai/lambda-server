@@ -18,6 +18,11 @@ from smart_health.processor import (
     transform_total_calories_burned,
     transform_floors_climbed
 )
+from smart_health.computations import (
+    calculates_stress_from_hrv,
+    calculates_recovery_from_hrv,
+    calculates_energy_from_hr
+)
 
 db_handler = PostgresDBHandler(
     host=os.environ.get('postgres_host'),
@@ -25,7 +30,7 @@ db_handler = PostgresDBHandler(
     user=os.environ.get('postgres_user'),
     password=os.environ.get('postgres_password')
 )
-DB_DEDUPE_ENABLE = bool(os.environ.get('db_dedupe_enable', 1))
+DB_DEDUPE_ENABLE = bool(os.environ.get('db_dedupe_enable', 0))
 
 def lambda_handler(
     event,
@@ -39,6 +44,7 @@ def lambda_handler(
         if record['eventName'] == 'INSERT':
             dynamodb_record = record.get('dynamodb', {})
             new_image = dynamodb_record.get('NewImage', {})
+            
             if new_image:
                 serialized_dynamo_dict = deserialize_dynamo_event(
                     dynamo_record=new_image
@@ -80,8 +86,77 @@ def lambda_handler(
                         logger.info("Deduplicated records: %s with size %s", transformed_records, len(transformed_records))
                     
                     db_handler.connect()
-                    db_handler.write_many('heart_rate_variability_rmssd', transformed_records, columns, conflict_columns=conflict_columns)
+                    db_handler.write_many('heart_rate_variability_rmssd', transformed_records, columns, conflict_columns=["activity_end_time"])
                     db_handler.disconnect()
+                    
+                    #For calculated parameters
+                    stress_records = calculates_stress_from_hrv(
+                        item=serialized_dynamo_dict
+                    )
+                    if len(transformed_records) == 0:
+                        logger.warning("No records found for user_id: %s", user_id)
+                        return
+                    
+                    columns = [
+                        'user_id',
+                        'source',
+                        'start_time',
+                        'end_time',
+                        'dynamo_created_at',
+                        'score',
+                        'last_modified_time',
+                        'recorded_time',
+                        'activity_start_time',
+                        'activity_end_time'
+                    ]
+                    conflict_columns = None
+                    logger.info("Transformed records: %s with size %s", transformed_records, len(transformed_records))
+                    
+                    if DB_DEDUPE_ENABLE is True:
+                        transformed_records = deduplicate_by_keys(
+                            dict_list=transformed_records,
+                            keys=['source', 'activity_end_time']
+                        )
+                        logger.info("Deduplicated records: %s with size %s", transformed_records, len(transformed_records))
+                    
+                    db_handler.connect()
+                    db_handler.write_many('stress', stress_records, columns, conflict_columns=["activity_end_time"])
+                    db_handler.disconnect()
+                    
+                    #Recovery Calculation
+                    recovery_records = calculates_recovery_from_hrv(
+                        item=serialized_dynamo_dict
+                    )
+                    if len(transformed_records) == 0:
+                        logger.warning("No records found for user_id: %s", user_id)
+                        return
+                    
+                    columns = [
+                        'user_id',
+                        'source',
+                        'start_time',
+                        'end_time',
+                        'dynamo_created_at',
+                        'score',
+                        'last_modified_time',
+                        'recorded_time',
+                        'activity_start_time',
+                        'activity_end_time'
+                    ]
+                    conflict_columns = None
+                    logger.info("Transformed records: %s with size %s", transformed_records, len(transformed_records))
+                    
+                    if DB_DEDUPE_ENABLE is True:
+                        transformed_records = deduplicate_by_keys(
+                            dict_list=transformed_records,
+                            keys=['source', 'activity_end_time']
+                        )
+                        logger.info("Deduplicated records: %s with size %s", transformed_records, len(transformed_records))
+                    
+                    db_handler.connect()
+                    db_handler.write_many('recovery', recovery_records, columns, conflict_columns=["activity_end_time"])
+                    db_handler.disconnect()
+
                     
                 if record_type == 'HeartRate':
                     transformed_records = transform_heart_rate(
@@ -115,7 +190,41 @@ def lambda_handler(
                         logger.info("Deduplicated records: %s with size %s", transformed_records, len(transformed_records))
                     
                     db_handler.connect()
-                    db_handler.write_many('heart_rate', transformed_records, columns, conflict_columns=conflict_columns)
+                    db_handler.write_many('heart_rate', transformed_records, columns, conflict_columns=["activity_end_time"])
+                    db_handler.disconnect()
+                    
+                    #Energy Calculation
+                    energy_records = calculates_energy_from_hr(
+                        item=serialized_dynamo_dict
+                    )
+                    if len(transformed_records) == 0:
+                        logger.warning("No records found for user_id: %s", user_id)
+                        return
+                    
+                    columns = [
+                        'user_id',
+                        'source',
+                        'start_time',
+                        'end_time',
+                        'dynamo_created_at',
+                        'score',
+                        'last_modified_time',
+                        'recorded_time',
+                        'activity_start_time',
+                        'activity_end_time'
+                    ]
+                    conflict_columns = None
+                    logger.info("Transformed records: %s with size %s", transformed_records, len(transformed_records))
+                    
+                    if DB_DEDUPE_ENABLE is True:
+                        transformed_records = deduplicate_by_keys(
+                            dict_list=transformed_records,
+                            keys=['source', 'activity_end_time']
+                        )
+                        logger.info("Deduplicated records: %s with size %s", transformed_records, len(transformed_records))
+                    
+                    db_handler.connect()
+                    db_handler.write_many('energy', energy_records, columns, conflict_columns=["activity_end_time"])
                     db_handler.disconnect()
                 
                 if record_type == 'RestingHeartRate':
@@ -150,7 +259,7 @@ def lambda_handler(
                         logger.info("Deduplicated records: %s with size %s", transformed_records, len(transformed_records))
                     
                     db_handler.connect()
-                    db_handler.write_many('resting_heart_rate', transformed_records, columns, conflict_columns=conflict_columns)
+                    db_handler.write_many('resting_heart_rate', transformed_records, columns, conflict_columns=["activity_end_time"])
                     db_handler.disconnect()
                     
                 if record_type == 'Steps':
@@ -185,7 +294,7 @@ def lambda_handler(
                         logger.info("Deduplicated records: %s with size %s", transformed_records, len(transformed_records))
                     
                     db_handler.connect()
-                    db_handler.write_many('steps', transformed_records, columns, conflict_columns=conflict_columns)
+                    db_handler.write_many('steps', transformed_records, columns, conflict_columns=["activity_end_time"])
                     db_handler.disconnect()
                     
                 if record_type == 'Distance':
@@ -220,7 +329,7 @@ def lambda_handler(
                         logger.info("Deduplicated records: %s with size %s", transformed_records, len(transformed_records))
                     
                     db_handler.connect()
-                    db_handler.write_many('distance', transformed_records, columns, conflict_columns=conflict_columns)
+                    db_handler.write_many('distance', transformed_records, columns, conflict_columns=["activity_end_time"])
                     db_handler.disconnect()
                     
                 if record_type == 'TotalCaloriesBurned':
@@ -255,7 +364,7 @@ def lambda_handler(
                         logger.info("Deduplicated records: %s with size %s", transformed_records, len(transformed_records))
                     
                     db_handler.connect()
-                    db_handler.write_many('total_calories_burned', transformed_records, columns, conflict_columns=conflict_columns)
+                    db_handler.write_many('total_calories_burned', transformed_records, columns, conflict_columns=["activity_end_time"])
                     db_handler.disconnect()
                     
                 if record_type == 'FloorsClimbed':
@@ -290,7 +399,7 @@ def lambda_handler(
                         logger.info("Deduplicated records: %s with size %s", transformed_records, len(transformed_records))
                     
                     db_handler.connect()
-                    db_handler.write_many('floors_climbed', transformed_records, columns, conflict_columns=conflict_columns)
+                    db_handler.write_many('floors_climbed', transformed_records, columns, conflict_columns=["activity_end_time"])
                     db_handler.disconnect()
                 # transformed_records = invoke_health_transform(
                 #     item=serialized_dynamo_dict

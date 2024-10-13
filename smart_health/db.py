@@ -1,17 +1,17 @@
-# Initialize logging
 import logging
-logging.basicConfig()
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger.info("Loaded %s", __name__)
-
 import psycopg2
 from psycopg2.extras import execute_values
 from decimal import Decimal
 import psycopg2.sql as sql
 
+# Initialize logging
+logging.basicConfig()
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logger.info("Loaded %s", __name__)
+
+from smart_health.utils import remove_duplicates
 class PostgresDBHandler:
-    
     def __init__(self, host, database, user, password, schema='public'):
         self.connection_params = {
             'host': host,
@@ -67,7 +67,8 @@ class PostgresDBHandler:
             return
 
         data_values = []
-        for record in data_list:
+        unique_data_list = remove_duplicates(data_list, conflict_columns)
+        for record in unique_data_list:
             try:
                 validated_record = self.validate_data(record, columns)
                 values = [validated_record.get(col) for col in columns]
@@ -90,10 +91,32 @@ class PostgresDBHandler:
         )
 
         if conflict_columns:
-            # Add ON CONFLICT clause
-            conflict_clause = sql.SQL("ON CONFLICT ({conflict_fields}) DO NOTHING").format(
-                conflict_fields=sql.SQL(', ').join(map(sql.Identifier, conflict_columns))
-            )
+            # Exclude conflict_columns from the columns to be updated
+            update_columns = [col for col in columns if col not in conflict_columns]
+
+            if update_columns:
+                # Build the SET expressions
+                set_clause = sql.SQL(', ').join(
+                    sql.Composed([
+                        sql.Identifier(col),
+                        sql.SQL(' = EXCLUDED.'),
+                        sql.Identifier(col)
+                    ])
+                    for col in update_columns
+                )
+
+                conflict_clause = sql.SQL(" ON CONFLICT ({conflict_fields}) DO UPDATE SET {set_clause}").format(
+                    conflict_fields=sql.SQL(', ').join(map(sql.Identifier, conflict_columns)),
+                    set_clause=set_clause
+                )
+                logger.info(f"Conflict detected on columns {conflict_columns}. Rows will be updated on conflict.")
+            else:
+                # If no columns to update, DO NOTHING
+                conflict_clause = sql.SQL(" ON CONFLICT ({conflict_fields}) DO NOTHING").format(
+                    conflict_fields=sql.SQL(', ').join(map(sql.Identifier, conflict_columns))
+                )
+                logger.info(f"Conflict detected on columns {conflict_columns}. No action will be taken on conflict.")
+
             insert_query = insert_query + conflict_clause
 
         try:

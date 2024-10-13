@@ -36,7 +36,7 @@ def transform_heart_rate_variability(
         parsed_record['last_modified_time'] = record.get('metadata').get('lastModifiedTime')
         parsed_record['recorded_time'] = parse_zone_timestamp(record.get('metadata').get('lastModifiedTime'))
         parsed_record["activity_start_time"] = convert_to_ist(start_time)
-        parsed_record["activity_end_time"] = convert_to_ist(end_time)
+        parsed_record["activity_end_time"] = convert_to_ist(record.get('endTime'))
         transformed_records.append(parsed_record)
         
     return transformed_records

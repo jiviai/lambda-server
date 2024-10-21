@@ -28,12 +28,12 @@ class DynamoDBClient:
 
 
     def add_item(self, item):
-        try:
-            response = self.table.put_item(Item=item)
-            return response
-        except ClientError as e:
-            logger.error("some Exception occured - {}".format(str(e)))
-            traceback.print_exc()
+        #try:
+        response = self.table.put_item(Item=item)
+        return response
+        # except ClientError as e:
+        #     logger.error("some Exception occured - {}".format(str(e)))
+        #     traceback.print_exc()
 
 
     def get_item(self, key):

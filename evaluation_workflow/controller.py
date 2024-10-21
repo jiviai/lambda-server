@@ -63,17 +63,18 @@ def lambda_handler(
                     _save['image_urls'] = image_urls
                     _save['input_args'] = input_args
                     _save['created_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-                    try:
-                        logger.info("Saving the result in dynamo for object : %s", _save)
-                        dynamo_client.add_item(
-                            item=validate_dynamo_save_payload(
-                                obj=_save
-                            )
+                    # try:
+                    logger.info("Saving the result in dynamo for object : %s", _save)
+                    dynamo_response = dynamo_client.add_item(
+                        item=validate_dynamo_save_payload(
+                            obj=_save
                         )
-                        logger.info("Successfully saved the result in dynamo for reference id : %s", reference_id)
-                    except Exception as e:
-                        logger.error("Error while saving the result in dynamo for reference id : %s", reference_id)
-                        logger.error("Error: %s", e, exc_info=True)
+                    )
+                    logger.info("Dynamo Saved Response : %s", dynamo_response)
+                    #     logger.info("Successfully saved the result in dynamo for reference id : %s", reference_id)
+                    # except Exception as e:
+                    #     logger.error("Error while saving the result in dynamo for reference id : %s", reference_id)
+                    #     logger.error("Error: %s", e, exc_info=True)
                         
                 else:
                     logger.info("Agent Workflow Executor Failed")
@@ -91,17 +92,18 @@ def lambda_handler(
                     _save['input_args'] = input_args
                     _save['image_urls'] = image_urls
                     _save['created_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
-                    try:
-                        logger.info("Saving the result in dynamo for object : %s", _save)
-                        dynamo_client.add_item(
-                            item=validate_dynamo_save_payload(
-                                obj=_save
-                            )
+                    # try:
+                    logger.info("Saving the result in dynamo for object : %s", _save)
+                    dynamo_response = dynamo_client.add_item(
+                        item=validate_dynamo_save_payload(
+                            obj=_save
                         )
-                        logger.info("Successfully saved the result in dynamo for reference id : %s", reference_id)
-                    except Exception as e:
-                        logger.error("Error while saving the result in dynamo for reference id : %s", reference_id)
-                        logger.error("Error: %s", e, exc_info=True)
+                    )
+                    logger.info("Dynamo Saved Response : %s", dynamo_response)
+                    #     logger.info("Successfully saved the result in dynamo for reference id : %s", reference_id)
+                    # except Exception as e:
+                    #     logger.error("Error while saving the result in dynamo for reference id : %s", reference_id)
+                    #     logger.error("Error: %s", e, exc_info=True)
                         
             else:
                 logger.error("No new image found in the record or the image is broken")

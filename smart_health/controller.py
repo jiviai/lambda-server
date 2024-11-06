@@ -67,8 +67,8 @@ def lambda_handler(
                         "user_id": user_id,
                         "source": source,
                         "created_at": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                        "start_time": data_value_dict.get('metadata').get('start_time'),
-                        "end_time": data_value_dict.get('metadata').get('end_time'),
+                        "start_time": data_value_dict.get('metadata').get('startTime'),
+                        "end_time": data_value_dict.get('metadata').get('endTime'),
                         "data": data_value_dict.get('data')
                     }
                                         

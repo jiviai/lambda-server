@@ -11,6 +11,7 @@ import json
 import os
 
 from evaluation_workflow.api.api import invoke_workflow_executor
+from evaluation_workflow.api.slack import invoke_message_to_channel
 from evaluation_workflow.utils import validate_dynamo_save_payload
 from evaluation_workflow.db import DynamoDBClient
 
@@ -60,6 +61,7 @@ def lambda_handler(
                     _save['status'] = 'success'
                     _save['api_status_code'] = executor_result.get('status_code')
                     _save['api_raw_output'] = base64.b64encode(zlib.compress(bytes(executor_result.get('message'), encoding='utf-8'))).decode()
+                    _save['workflow_activity_status'] = "COMPLETED"
                     _save['image_urls'] = image_urls
                     _save['input_args'] = input_args
                     _save['created_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
@@ -73,8 +75,11 @@ def lambda_handler(
                             )
                         )
                         logger.info("Dynamo Saved Response : %s", dynamo_response)
-                    except Exception as e:
-                        logger.error("Error in validations -: %s", str(e), exc_info=True)
+                    except Exception as exc:
+                        logger.error("Error in validations -: %s", str(exc), exc_info=True)
+                        invoke_message_to_channel(
+                            message=exc
+                        )
                         _save['reference_id'] = reference_id
                         _save['reference_unique_id'] = reference_unique_id
                         _save['workflow_id'] = workflow_id
@@ -85,6 +90,7 @@ def lambda_handler(
                         _save['status'] = 'error'
                         _save['api_status_code'] = executor_result.get('status_code')
                         _save['api_raw_output'] = base64.b64encode(zlib.compress(bytes(executor_result.get('message'), encoding='utf-8'))).decode()
+                        _save['workflow_activity_status'] = "COMPLETED"
                         _save['image_urls'] = None
                         _save['input_args'] = None
                         _save['created_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
@@ -107,6 +113,7 @@ def lambda_handler(
                     _save['status'] = 'failed'
                     _save['api_status_code'] = executor_result.get('status_code')
                     _save['api_raw_output'] = base64.b64encode(zlib.compress(bytes(executor_result.get('message'), encoding='utf-8'))).decode()
+                    _save['workflow_activity_status'] = "COMPLETED"
                     _save['input_args'] = input_args
                     _save['image_urls'] = image_urls
                     _save['created_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")

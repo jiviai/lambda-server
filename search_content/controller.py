@@ -10,7 +10,7 @@ import os
 import concurrent.futures
 import uuid
 
-from search_content.api.api import invoke_content_creation_agent, invoke_language_translation_framework
+from search_content.api.api import invoke_content_creation_agent, invoke_language_translation_framework, invoke_bq_post_service
 from search_content.utils import validate_dynamo_save_payload
 from search_content.db import DynamoDBClient
 from search_content.opensearch import OpensearchLoader
@@ -43,9 +43,11 @@ def lambda_handler(
                 embedding = json.loads(new_image.get('query_embedding').get('S'))
                 chat_response = new_image.get('chat_response').get('S')
                 language = new_image.get('language').get('S')
+                user_id = new_image.get('user_id').get('S')
+                created_at = new_image.get('created_at').get('S')
 
                 logger.info("Query ID: %s search_entity_keys: %s entity: %s query: %s", query_id, search_entity_keys, entity, query)
-                
+                                
                 api_payloads = [
                         {
                             'agent_name': os.environ.get('CONTENT_CREATION_AGENT_NAME','user_query_topic_v1'),
@@ -98,7 +100,29 @@ def lambda_handler(
                             dynamo_client.add_item(item=validate_dynamo_save_payload(obj=_save))
                         except Exception as exc:
                             logger.error(f"API call with params {params} generated an exception: {exc}")
-    
+                
+                bq_payload = {
+                    "user_id":user_id,
+                    "query": query,
+                    "query_id": query_id,
+                    "search_entity_keys": new_image.get('search_entity_keys').get('S'),
+                    "entity": new_image.get('entity').get('S'),
+                    "query_original": new_image.get('query_original').get('S'),
+                    "related_queries":  new_image.get('related_queries').get('S'),
+                    "embedding": new_image.get('query_embedding').get('S'),
+                    "chat_response": new_image.get('chat_response').get('S'),
+                    "language": new_image.get('language').get('S'),
+                    "created_at": created_at
+                }
+                
+                bq_service_response = invoke_bq_post_service(
+                    payload_dict=bq_payload,
+                    table_name=os.environ.get("BQ_TABLE_NAME","query_search_prod_v2"),
+                    db_name=os.environ.get('BQ_DB_NAME','jivihealth')
+                )
+                
+                logger.info(f"Response from bq service response - {bq_service_response}")
+                  
             else:
                 logger.error("No new image found in the record or the image is broken")
             

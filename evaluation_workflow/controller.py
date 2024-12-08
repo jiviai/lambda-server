@@ -32,6 +32,9 @@ def lambda_handler(
 
             if new_image is not None:
                 reference_id = new_image.get('reference_id').get('S')
+                if reference_id in ["drug_dosage_data_gen_workflow-2024-12-04 09:47:45.214260"]:
+                    logger.info("Skipping the record for reference id : %s", reference_id)
+                    continue
                 reference_unique_id = new_image.get('reference_unique_id').get('S')
                 reference_identity = new_image.get('reference_identity').get('N')
                 workflow_id = new_image.get('workflow_id').get('S')

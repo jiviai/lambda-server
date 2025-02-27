@@ -23,6 +23,7 @@ def invoke_workflow_executor(
     headers = {
         'Accept': 'application/json, text/plain, */*',
         'Authorization': 'Basic ZHNfdXNlcjpkc0AxMjM=',
+        'debug': 'true'
     }
 
     response = requests.request(
